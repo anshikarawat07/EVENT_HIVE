@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////// USER ////////////////////
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     String   // student | teacher | club
+
+  // relations
+  eventsCreated Event[] @relation("ClubEvents")
+  registrations Registration[]
+  attendances Attendance[]
+  certificates Certificate[]
+}
+
+//////////////////// EVENT ////////////////////
+
+model Event {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  date        String
+  location    String
+  poster      String?    // image url optional
+
+  status      String @default("pending") 
+  // pending | approved | rejected
+
+  createdBy   Int
+  club        User @relation("ClubEvents", fields: [createdBy], references: [id])
+
+  qrCode      String?   // generated QR code
+
+  registrations Registration[]
+  attendances   Attendance[]
+  certificates  Certificate[]
+}
+
+//////////////////// REGISTRATION ////////////////////
+
+model Registration {
+  id      Int @id @default(autoincrement())
+
+  userId  Int
+  eventId Int
+
+  status String @default("registered")
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+//////////////////// ATTENDANCE ////////////////////
+
+model Attendance {
+  id      Int @id @default(autoincrement())
+  userId  Int
+  eventId Int
+  status  String @default("present")
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+//////////////////// CERTIFICATE ////////////////////
+
+model Certificate {
+  id      Int @id @default(autoincrement())
+  userId  Int
+  eventId Int
+  url     String
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+}
